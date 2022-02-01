@@ -4,7 +4,7 @@
   "description": "sqlApi",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "nodemon index.js"
   },
   "repository": {
     "type": "git",
@@ -17,8 +17,10 @@
   },
   "homepage": "https://github.com/johandiMIS/sqlApi#readme",
   "dependencies": {
+    "bcrypt": "^5.0.1",
     "body-parser": "^1.19.0",
     "express": "^4.17.1",
+    "password-validator": "^5.2.1",
     "pg": "^8.7.1"
   }
 }
