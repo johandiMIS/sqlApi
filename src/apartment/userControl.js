@@ -3,6 +3,7 @@ const bcrypt = require("bcrypt")
 const { user } = require("pg/lib/defaults")
 const passwordValidator = require("password-validator")
 const pool = require("../../db")
+const { promise, reject } = require("bcrypt/promises")
 
 
 const signUp = async (req, res) => {
@@ -87,6 +88,17 @@ const signUp = async (req, res) => {
     .catch((error)=>{
         console.log("last")
         res.json(error)
+    })
+}
+
+const SignUp2 = async (req, res) =>{
+    
+    const userQuery = Promise((resolve, reject) => {
+        pool.query(`select count(*) from userTable where username = '${req.body.username}'`);
+    })
+    
+    const passwordCheck = Promise((resolve, reject)=>{
+
     })
 }
 

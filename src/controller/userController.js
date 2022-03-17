@@ -1,6 +1,7 @@
 const pool = require("../../db")
 const bcrypt = require("bcrypt")
-const passwordValidator = require("password-validator")
+const passwordValidator = require("password-validator");
+const { reject } = require("bcrypt/promises");
 const DefaultRoute = (req, res)=>{
     res.send('invalid route');
 }
@@ -91,13 +92,60 @@ const SignUp = async (req, res) => {
         }
     })
     .catch((error)=>{
-        console.log("last")
         res.json(error)
+    })
+}
+
+const SignUp2 = async (req, res) =>{
+    const password = req.body.password
+    const username = req.body.username
+    var schema = new passwordValidator()
+    .is().min(8)
+    .is().max(30)
+    .has().uppercase()
+    .has().lowercase()
+    .has().digits()
+    .has().symbols()
+    .has().not().spaces()
+    .is().not().oneOf([username]);
+
+    
+    const passwordValidate = (schema, password)=>{
+        return new Promise((resolve, reject)=>{
+            if(schema.validate(password) === true){
+                resolve('password validated')
+            }
+            else{
+                reject('password format wrong')
+            }
+        })
+    }
+
+    const userQuery = (username)=>{
+        return new Promise((resolve, reject)=>{
+            pool.query(`select count(*) from userTable where username = '${username}'`)
+            .then(()=>{
+                resolve('succes')
+            })
+            .catch(()=>{
+                reject('fails')
+            })
+           
+        })
+    }
+
+    Promise.race([passwordValidate(schema, password),  userQuery(username)]) 
+    .then((response) => {
+        res.send(response)
+    })
+    .catch((result)=>{
+        res.send([result])
     })
 }
 
 module.exports = {
     DefaultRoute,
     GetAll,
-    SignUp
+    SignUp,
+    SignUp2
 }
