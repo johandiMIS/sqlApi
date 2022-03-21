@@ -1,12 +1,13 @@
 const pool = require("../../db")
 const bcrypt = require("bcrypt")
 const passwordValidator = require("password-validator");
-const { reject } = require("bcrypt/promises");
+const { reject, promise } = require("bcrypt/promises");
+const { response } = require("express");
 const DefaultRoute = (req, res)=>{
     res.send('invalid route');
 }
 const GetAll = (req, res) => {
-    pool.query("select * from apartment", (error, result)=>{
+    pool.query("select * from userTable", (error, result)=>{
         if(error) res.send(error) ;
         res.status(200).json(result.rows);
     })
@@ -99,6 +100,7 @@ const SignUp = async (req, res) => {
 const SignUp2 = async (req, res) =>{
     const password = req.body.password
     const username = req.body.username
+    const hashPassword =''
     var schema = new passwordValidator()
     .is().min(8)
     .is().max(30)
@@ -110,36 +112,119 @@ const SignUp2 = async (req, res) =>{
     .is().not().oneOf([username]);
 
     
-    const passwordValidate = (schema, password)=>{
+    const PasswordValidate = (schema, password)=>{
         return new Promise((resolve, reject)=>{
             if(schema.validate(password) === true){
-                resolve('password validated')
+                resolve({
+                    result: "Success",
+                    message: "Password Valid",
+                    description : ""
+                })
             }
             else{
-                reject('password format wrong')
+                reject({
+                    result: "Error",
+                    message: "Password Format Invalid",
+                    description: schema.validate(password, {details:true}) 
+                })
             }
         })
     }
 
-    const userQuery = (username)=>{
+    const UserQuery = (username)=>{
         return new Promise((resolve, reject)=>{
             pool.query(`select count(*) from userTable where username = '${username}'`)
-            .then(()=>{
-                resolve('succes')
+            .then((res)=>{
+                if(JSON.parse(res.rows[0].count) <= 0) resolve({
+                    result: "Success",
+                    message: "Username Valid",
+                    description : {
+                        name: username
+                    }
+                })
+                else{
+                    reject({
+                        result : "Error",
+                        message : `Username ${username} Already Used`,
+                        description : ""
+                    })
+                }
             })
-            .catch(()=>{
-                reject('fails')
+            .catch((err)=>{
+                reject({
+                    result : "Error",
+                    message : `Throw Error, ${err}`,
+                    description : ""
+                })
             })
-           
+        })
+    }
+    
+    const GetHash = function(password){
+        return new Promise((resolve, reject)=>{
+            bcrypt.genSalt(10, function(err, salt) {
+                if(err){
+                    reject({
+                        result : "Error",
+                        message : `Failed Generate Salt`,
+                        description : ""
+                    })
+                }
+                else{
+                    bcrypt.hash(password, salt, function(err, hash) {
+                        if(err){
+                            reject({
+                                result : "Error",
+                                message : `Failed Encrypt Password`,
+                                description : ""
+                            })
+                        }
+                        else{
+                            resolve({
+                                result : "Success",
+                                message : `Password encrypted`,
+                                description : hash
+                            })
+                        }
+                    });
+                }
+            });
         })
     }
 
-    Promise.race([passwordValidate(schema, password),  userQuery(username)]) 
-    .then((response) => {
-        res.send(response)
+    const InsertUser = function(username, hashPassword){
+        return new Promise((resolve, reject)=>{
+            
+            pool.query(`insert into userTable (username, hashPassword, userRole)
+                        values ('${username}','${hashPassword}', 0)`)
+            .then((res)=>{
+                resolve({
+                    result:"Success",
+                    message: `Insert User, ${res}`,
+                    description : {
+                        name: username
+                    }
+                })
+            })
+            .catch((err)=>{
+                reject({
+                    result : "Error",
+                    message : `Throw Error, ${err}`,
+                    description : ""
+                })
+            })
+        })
+    }
+
+    await Promise.all([PasswordValidate(schema, password),  UserQuery(username), GetHash(password)]) 
+    .then( async (response) => {
+        return await InsertUser(username, response[2].description)
     })
-    .catch((result)=>{
-        res.send([result])
+    .then((res)=>{
+        res.status(200).json(res)
+    })
+    .catch((err)=>{
+        res.send(err)
     })
 }
 
