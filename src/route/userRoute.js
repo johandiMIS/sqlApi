@@ -1,8 +1,12 @@
 const {Router}  = require("express");
+const { route } = require("express/lib/application");
 const router = new Router();
 const controller = require('../controller/userController')
+
 router.get('/getall', controller.GetAll);
+router.get('/login', controller.LogIn)
 router.post('/signup', controller.SignUp);
-router.post('/signup2', controller.SignUp2);
+
 router.get('/*', controller.DefaultRoute);
+
 module.exports = router;
