@@ -2,6 +2,7 @@ const pool = require("../../db")
 const bcrypt = require("bcrypt")
 const passwordValidator = require("password-validator");
 const res = require("express/lib/response");
+const { json } = require("express/lib/response");
 
 const GetHash = function(password){
     return new Promise((resolve, reject)=>{
@@ -132,7 +133,7 @@ const InsertUser = function(username, hashPassword){
         .then((res)=>{
             resolve({
                 result:"Success",
-                message: `Insert User, ${res}`,
+                message: `Insert User`,
                 description : {
                     name: username
                 }

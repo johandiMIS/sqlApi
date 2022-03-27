@@ -15,20 +15,20 @@ const GetAll = (req, res) => {
     })
 }
 
-const SignUp = async (req, res) =>{
+const SignUp = (req, res) =>{
     const password = req.body.password
     const username = req.body.username
 
-    await Promise.all([
+    Promise.all([
         userModel.PasswordValidate(password), 
         userModel.UsernameAvailable(username), 
         userModel.PasswordEncrypt(password)
     ]) 
-    .then( async (response) => {
-        userModel.InsertUser(username, response[2].description)
+    .then((result) => {
+        return userModel.InsertUser(username, result[2].description)
     })
-    .then((res)=>{
-        res.status(200).json(res)
+    .then((result)=>{
+        res.status(200).json(result)
     })
     .catch((err)=>{
         res.send(err)

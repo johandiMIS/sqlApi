@@ -6,7 +6,6 @@ const controller = require('../controller/userController')
 router.get('/getall', controller.GetAll);
 router.get('/login', controller.LogIn)
 router.post('/signup', controller.SignUp);
-
 router.get('/*', controller.DefaultRoute);
 
 module.exports = router;
