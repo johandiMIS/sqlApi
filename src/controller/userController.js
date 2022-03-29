@@ -1,5 +1,6 @@
 const pool = require("../../db")
 const bcrypt = require("bcrypt")
+const jwt = require('jsonwebtoken')
 const passwordValidator = require("password-validator");
 const { reject, promise } = require("bcrypt/promises");
 const { response } = require("express");
@@ -14,12 +15,11 @@ const GetAll = (req, res) => {
         res.status(200).json(result.rows);
     })
 }
-
-const SignUp = (req, res) =>{
+const SignUp = async (req, res) =>{
     const password = req.body.password
     const username = req.body.username
 
-    Promise.all([
+    const result = await Promise.all([
         userModel.PasswordValidate(password), 
         userModel.UsernameAvailable(username), 
         userModel.PasswordEncrypt(password)
@@ -34,22 +34,47 @@ const SignUp = (req, res) =>{
         res.send(err)
     })
 }
-
 const LogIn = async (req, res)=>{
     const password = req.body.password
     const username = req.body.username
 
-    userModel.GetPassword(username)
-    .then((res)=>[
-        res.send (res)
-    ])
+    const compareResult = await userModel.ComparePassword(username, password)
+
+    const userData = await userModel.GetPassword(username)
+    .then((result)=>{
+        if(compareResult){
+            return jwt.sign({result},'myWord')
+        }
+    })
+    
+    .then((result)=>{
+        console.log(result)
+        return jwt.verify(result,'myWord')
+    })
+    .then((response)=>{
+        console.log(response[0])
+        res.json(response)
+    })
     .catch((err)=>{
-        console.log(err)
-        res.send(err)
+        res.json(err)
     })
 
 
+    // Promise.all([
+    //     userModel.ComparePassword(username, password)
+    // ])
+    // .then((result)=>{
+    //     console.log(result)
+    //     res.json(result[0][0])
+    // })
+    // .catch((err)=>{
+    //     console.log(err)
+    //     res.json(result)
+    // })
+
+    
 }
+
 module.exports = {
     DefaultRoute,
     GetAll,

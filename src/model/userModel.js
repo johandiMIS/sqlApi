@@ -152,43 +152,29 @@ const InsertUser = function(username, hashPassword){
 const GetPassword = function (username){
     return new Promise((resolve, reject)=>{
         pool.query(`select * from userTable where username = '${username}' order by userNumber `, (error, result)=>{
-            if(error) reject({
+            if(result.rows.count <= 0) reject({
                 result : "Error",
                 message : `Throw Error, ${err}`,
                 description : ""
             })
-            else resolve({
-                result : "Success",
-                message : `${result}`,
-                description : ""
-            })
+            resolve(result.rows)            
         })
     })
 }
-        // .then((res)=>{
-        //     resolve(res)
-            // if(JSON.parse(res.rows[0].count) > 0) resolve({
-            //     result: "Success",
-            //     message: "Username Valid",
-            //     description : hashPassword
-            // })
-            // else{
-            //     reject({
-            //         result : "Error",
-            //         message : `Username ${username} Not Found`,
-            //         description : ""
-            //     })
-            // }
-    //     })
-    //     .catch((err)=>{
-    //         reject({
-    //             result : "Error",
-    //             message : `Throw Error, ${err}`,
-    //             description : ""
-    //         })
-    //     })
-    // })
-// }
+const ComparePassword = function(username, password){
+    return new Promise((resolve, reject)=>{
+        GetPassword(username)
+        .then((result)=>{
+            return bcrypt.compare(password, result[0].hashpassword)
+        })
+        .then((result)=>{
+            resolve(result)
+        })
+        .catch((err)=>{
+            reject(err)
+        })
+    })
+}     
 
 module.exports = {
     GetHash,
@@ -196,5 +182,6 @@ module.exports = {
     UsernameAvailable,
     PasswordEncrypt,
     InsertUser,
-    GetPassword
+    GetPassword,
+    ComparePassword
 }
