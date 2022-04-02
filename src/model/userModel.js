@@ -3,6 +3,7 @@ const bcrypt = require("bcrypt")
 const passwordValidator = require("password-validator");
 const res = require("express/lib/response");
 const { json } = require("express/lib/response");
+const jwt = require('jsonwebtoken')
 
 const GetHash = function(password){
     return new Promise((resolve, reject)=>{
@@ -176,6 +177,18 @@ const ComparePassword = function(username, password){
     })
 }     
 
+const JwtVerify = function (token){
+    return new Promise((resolve, reject)=>{
+        try{
+            const data = jwt.verify(token, 'myWord')  
+            resolve(data)        
+        }
+        catch(err){
+            reject('Failed Authenticate')
+        }
+    })
+}
+
 module.exports = {
     GetHash,
     PasswordValidate,
@@ -183,5 +196,6 @@ module.exports = {
     PasswordEncrypt,
     InsertUser,
     GetPassword,
-    ComparePassword
+    ComparePassword,
+    JwtVerify
 }

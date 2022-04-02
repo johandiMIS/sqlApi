@@ -4,7 +4,8 @@ const jwt = require('jsonwebtoken')
 const passwordValidator = require("password-validator");
 const { reject, promise } = require("bcrypt/promises");
 const { response } = require("express");
-const userModel = require('../model/userModel.js')
+const userModel = require('../model/userModel.js');
+const { connectionString } = require("pg/lib/defaults");
 
 const DefaultRoute = (req, res)=>{
     res.send('invalid route');
@@ -37,47 +38,45 @@ const SignUp = async (req, res) =>{
 const LogIn = async (req, res)=>{
     const password = req.body.password
     const username = req.body.username
-
     const compareResult = await userModel.ComparePassword(username, password)
 
-    const userData = await userModel.GetPassword(username)
+    await userModel.GetPassword(username)
     .then((result)=>{
         if(compareResult){
             return jwt.sign({result},'myWord')
         }
     })
-    
-    .then((result)=>{
-        console.log(result)
-        return jwt.verify(result,'myWord')
-    })
     .then((response)=>{
-        console.log(response[0])
-        res.json(response)
+        res.json({token: response})
     })
     .catch((err)=>{
         res.json(err)
     })
-
-
-    // Promise.all([
-    //     userModel.ComparePassword(username, password)
-    // ])
-    // .then((result)=>{
-    //     console.log(result)
-    //     res.json(result[0][0])
-    // })
-    // .catch((err)=>{
-    //     console.log(err)
-    //     res.json(result)
-    // })
-
-    
 }
 
+const Auth = async (req, res, next) =>{
+    try{
+        await userModel.JwtVerify(req.header('Authorization').replace('Bearer ',''))
+        .then(()=>{
+            next()
+        })
+        .catch(()=>{
+            throw new Error("Fail Authenticate")
+        })
+    }
+    catch{
+        res.json("Fail Authenticate")
+    }
+}       
+const Test = async (req, res)=>{
+    
+    res.json("sucess test")
+}
 module.exports = {
     DefaultRoute,
     GetAll,
-    SignUp,
-    LogIn
+    SignUp,  
+    LogIn,
+    Auth,
+    Test
 }
