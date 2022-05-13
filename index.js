@@ -7,7 +7,7 @@ app.use(express.json())
 
 
 app.use('/api/user/', userRoute);
-app.use('/api/sensor', sensorRoute);
+app.use('/api/sensor/', sensorRoute);
 app.get('/*', (req, res)=>{
     res.send("hello world")
 })

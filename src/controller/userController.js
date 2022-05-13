@@ -35,6 +35,7 @@ const SignUp = async (req, res) =>{
         res.send(err)
     })
 }
+
 const LogIn = async (req, res)=>{
     const password = req.body.password
     const username = req.body.username
